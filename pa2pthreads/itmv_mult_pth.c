@@ -20,9 +20,7 @@
 
 #include "itmv_mult_pth.h"
 
-
 pthread_barrier_t mybarrier; /*It will be initailized at itmv_mult_test_pth.c*/
-
 
 /*---------------------------------------------------------------------
  * Function:            mv_compute
@@ -33,7 +31,7 @@ pthread_barrier_t mybarrier; /*It will be initailized at itmv_mult_test_pth.c*/
  *        double vector_d[]: vector d
  *        double vector_x[]: vector x
  *        matrix_type: matrix_type=0 means A is a regular matrix.
- *                     matrix_type=1 (UPPER_TRIANGULAR) means A is an upper 
+ *                     matrix_type=1 (UPPER_TRIANGULAR) means A is an upper
  *                     triangular matrix
  *        matrix_dim: the global  number of columns (same as the number of rows)
  * Global in/out vars:
@@ -53,7 +51,6 @@ void mv_compute(int i) {
   vector_y[i] = tmp_y;
 }
 
-
 /*---------------------------------------------------------------------
  * Function:  work_block
  * Purpose:   Run t iterations of parallel computation:  {y=d+Ax; x=y}
@@ -61,7 +58,7 @@ void mv_compute(int i) {
  *            For example, given 2 threads,
  *            Thread 0 should handle computation for Rows 0 and 1, and
  *            Thread 1 should handle computation for Rows 2 and 3.
- * In arg:    
+ * In arg:
  *            my_rank: rank of this thread (counted from 0)
  * Global in vars:
  *            thread_count
@@ -79,12 +76,37 @@ void mv_compute(int i) {
  *            double vector_y[]:  vector y
  */
 void work_block(long my_rank) {
-  /*Your solution*/
+  int k, i;
+  int blocksize = (matrix_dim + thread_count - 1) / thread_count;
+  int first_row = my_rank * blocksize;
+  int last_row = first_row + blocksize;
+  if (last_row > matrix_dim)
+    last_row = matrix_dim;
+
+  for (k = 0; k < no_iterations; k++) {
+    /* Compute y = d + A*x for owned rows */
+    for (i = first_row; i < last_row; i++) {
+      mv_compute(i);
+    }
+    /* Barrier: all threads must finish computing y before copying */
+    pthread_barrier_wait(&mybarrier);
+
+    /* Check convergence and copy y -> x for owned rows */
+    int local_stop = 1;
+    for (i = first_row; i < last_row; i++) {
+      if (fabs(vector_x[i] - vector_y[i]) > ERROR_THRESHOLD) {
+        local_stop = 0;
+      }
+      vector_x[i] = vector_y[i];
+    }
+    /* Barrier: all threads must finish copying before next iteration */
+    pthread_barrier_wait(&mybarrier);
+  }
 }
 
 /*---------------------------------------------------------------------
  * Function:  work_blockcyclic
- * Purpose:   Run t iterations of parallel computation:  {y=d+Ax; x=y} 
+ * Purpose:   Run t iterations of parallel computation:  {y=d+Ax; x=y}
  *            based on block cylic mapping
  *
  * In arg:
@@ -107,7 +129,27 @@ void work_block(long my_rank) {
  *            double vector_y[]:  vector y
  */
 void work_blockcyclic(long my_rank) {
-  /*Your solution*/
+  int k, i;
+
+  for (k = 0; k < no_iterations; k++) {
+    /* Compute y = d + A*x for owned rows (block-cyclic mapping) */
+    for (i = 0; i < matrix_dim; i++) {
+      if ((i / cyclic_blocksize) % thread_count == my_rank) {
+        mv_compute(i);
+      }
+    }
+    /* Barrier: all threads must finish computing y before copying */
+    pthread_barrier_wait(&mybarrier);
+
+    /* Copy y -> x for owned rows */
+    for (i = 0; i < matrix_dim; i++) {
+      if ((i / cyclic_blocksize) % thread_count == my_rank) {
+        vector_x[i] = vector_y[i];
+      }
+    }
+    /* Barrier: all threads must finish copying before next iteration */
+    pthread_barrier_wait(&mybarrier);
+  }
 }
 
 /*-------------------------------------------------------------------
@@ -120,7 +162,7 @@ void work_blockcyclic(long my_rank) {
  *                          A is an upper triangular matrix
  *            n: the global number of columns (same as the number of rows)
  *            t: the maximum number of iterations
- * In/out:    x: column vector x 
+ * In/out:    x: column vector x
  *            y: column vector y
  * Return:  1  means succesful 0 means unsuccessful
  *
@@ -131,7 +173,8 @@ int itmv_mult_seq(double A[], double x[], double d[], double y[],
                   int matrix_type, int n, int t) {
   int i, j, start, k, stop;
 
-  if (n <= 0 || A == NULL || x == NULL || d == NULL || y == NULL) return 0;
+  if (n <= 0 || A == NULL || x == NULL || d == NULL || y == NULL)
+    return 0;
 
   for (k = 0; k < t; k++) {
     // Do matrix-vector computation.
@@ -146,10 +189,10 @@ int itmv_mult_seq(double A[], double x[], double d[], double y[],
         y[i] += A[i * n + j] * x[j];
       }
     }
-    
+
     // Check if reach convergence.
     stop = 1;
-    for (i = 0; i < n && stop; i++) 
+    for (i = 0; i < n && stop; i++)
       if (fabs(x[i] - y[i]) > ERROR_THRESHOLD) {
         stop = 0;
       }
