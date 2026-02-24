@@ -1,0 +1,44 @@
+Notes on Nov 15, 2025 on Expanse using a machine from the shared cluster partition
+
+Step 1:  Execute the following commands
+
+module load gpu/0.15.4 intel/19.0.5.281
+
+
+Step 2: Comiple two files blasmm.c and blas2.c
+
+	make
+
+Step 3 Run blasmm on an acquired machine core with 1 thread using a job script 
+export OMP_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+
+
+To run 8 threads with 8 cores, modify runblasmm.sh with 8 node requests also:
+export OMP_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+Then submit a job (the login node does not seem to allow the use of multiple cores)
+	make runblasmm
+
+
+Files:
+
+
+blasmm.c
+	--- Implement matrix matrix multiplication using 3 options
+		1. Intel MKL library gemm based on the standard BLAS software.
+			Notice that matrices are typically layed out with a column-major manner 
+		2. Use  N gemv function calls with a nested loop
+		3. Use a standard but naive implemenetation with 3 nested loops. 	
+		 
+
+	The compilation links MKL library on Expanse.
+
+	To test it on the login node.
+	make localrunblasmm
+
+blas2.c --- An example of BLAS2 gemv  with small matrices to illustrate
+			the column-major layout of matrices.
+ 
+	To test it on the login node.
+	make localrunblas2
