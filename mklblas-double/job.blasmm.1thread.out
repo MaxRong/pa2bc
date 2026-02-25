@@ -1,0 +1,25 @@
+Maximum number of threads allowed for MKL: 1
+--- Matrix Multiplication Performance Comparison ---
+Matrix size: N=50 x N=50
+MKL DGEMM     : Time 0.042028 sec. GFLOPS 0.01.  0.00x
+MKL DGEMV Loop: Time 0.000040 sec. GFLOPS 6.24.  2.15x
+Naive 3 loops : Time 0.000086 sec. GFLOPS 2.90.  1.00x
+Mid-point verification looks OK: DGEMM=10.4441, DGEMV=10.4441, Naive=10.4441
+--- Matrix Multiplication Performance Comparison ---
+Matrix size: N=200 x N=200
+MKL DGEMM     : Time 0.000966 sec. GFLOPS 16.57.  3.23x
+MKL DGEMV Loop: Time 0.001286 sec. GFLOPS 12.44.  2.43x
+Naive 3 loops : Time 0.003123 sec. GFLOPS 5.12.  1.00x
+Mid-point verification looks OK: DGEMM=45.1042, DGEMV=45.1042, Naive=45.1042
+--- Matrix Multiplication Performance Comparison ---
+Matrix size: N=800 x N=800
+MKL DGEMM     : Time 0.029261 sec. GFLOPS 35.00.  13.38x
+MKL DGEMV Loop: Time 0.082539 sec. GFLOPS 12.41.  4.74x
+Naive 3 loops : Time 0.391456 sec. GFLOPS 2.62.  1.00x
+Mid-point verification looks OK: DGEMM=201.3727, DGEMV=201.3727, Naive=201.3727
+--- Matrix Multiplication Performance Comparison ---
+Matrix size: N=1600 x N=1600
+MKL DGEMM     : Time 0.216402 sec. GFLOPS 37.86.  48.63x
+MKL DGEMV Loop: Time 1.924734 sec. GFLOPS 4.26.  5.47x
+Naive 3 loops : Time 10.523589 sec. GFLOPS 0.78.  1.00x
+Mid-point verification looks OK: DGEMM=405.6966, DGEMV=405.6966, Naive=405.6966
